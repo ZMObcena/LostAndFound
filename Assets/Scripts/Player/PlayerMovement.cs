@@ -6,15 +6,15 @@ using UnityEngine.InputSystem.XR;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject _playerModel;
     private CharacterController _controller;
-    private Vector3 _movementDir;
+    public Vector3 _movementDir;
     private Vector3 _direction;
     private Vector3 _jumpVector;
 
-    private bool _isJumping = false;
-    private bool _isGrounded;
+    public bool _isJumping = false;
+    public bool _isWalking;
+    public bool _isGrounded;
+    public bool _isFalling = false;
 
     [SerializeField]
     private float _movementSpeed;
@@ -26,8 +26,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private float _turnSmoothTime = 0.1f;
     private float _turnSmoothVelocity;
-
-    private int _jumpCount = 0;
 
     private Transform _mainCameraTransform;
     void Awake()
@@ -50,7 +48,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void RaycastGroundCheck()
     {
-        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, 0.1f))
+        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, 0.3f))
         {
             this._isGrounded = true;
             Debug.Log("Grounded");
@@ -66,18 +64,24 @@ public class PlayerMovement : MonoBehaviour
     {
         if (this._isGrounded)
         {
-            this._jumpCount = 0;
+            this._isJumping = false;
+            this._isFalling = false;
         }
 
         if (!this._isJumping)
         {
             this._jumpVector.y += Physics.gravity.y * Time.deltaTime;
             this._controller.Move(this._jumpVector * Time.deltaTime);
+
+            if(!this._isJumping && !this._isGrounded)
+            {
+                this._isFalling = true;
+            }
         }
     }
     public void OnMove(InputAction.CallbackContext value)
     {
-        if(this._isGrounded)
+        if (value.performed && this._isGrounded)
         {
             //this._movementDir = new Vector3(value.ReadValue<Vector2>().x, 0f, value.ReadValue<Vector2>().y).normalized;
             this._direction = new Vector3(value.ReadValue<Vector2>().x, 0f, value.ReadValue<Vector2>().y).normalized;
@@ -101,19 +105,22 @@ public class PlayerMovement : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext value)
     {
-        if (value.performed)
+        if (value.performed && this._isGrounded)
         {
+            this._isJumping = true;
             this.HandleJump();
         }
     }
 
     private void HandleJump()
     {
-        if (this._jumpCount != 2)
+        if (!this._isJumping && this._isGrounded)
         {
-            this._jumpVector.y = Mathf.Sqrt(1f * -this._jumpForce * Physics.gravity.y);
+            this._isJumping = true;
             this._isGrounded = false;
-            this._jumpCount++;
+            this._jumpVector.y = Mathf.Sqrt(1f * -this._jumpForce * Physics.gravity.y);
+            this._isFalling = true;
+            this._isJumping = false;
         }
     }
 
