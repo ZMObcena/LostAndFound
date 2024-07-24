@@ -14,7 +14,7 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 _jumpVector;
 
     private bool _isJumping = false;
-    private bool _isGrounded = true;
+    private bool _isGrounded;
 
     [SerializeField]
     private float _movementSpeed;
@@ -50,13 +50,15 @@ public class PlayerMovement : MonoBehaviour
 
     private void RaycastGroundCheck()
     {
-        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, ((this._controller.height / 2) + 0.1f)))
+        if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, 0.1f))
         {
             this._isGrounded = true;
+            Debug.Log("Grounded");
         }
         else
         {
             this._isGrounded = false;
+            Debug.Log("Not Grounded");
         }
     }
 
